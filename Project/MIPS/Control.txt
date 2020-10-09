@@ -1,0 +1,63 @@
+module Control(
+input wire [5:0] Opcode, Funct,
+output reg [3:0] ALUop,
+output reg RegDst, RegWrite, MemRead, MemWrite, 
+ALUSrc, MemtoReg, Branch, NotEqualBranch, Jump
+); // Generating Opcodes and Control signals.
+
+
+always @(*) begin // Opcode를 필요한 신호로 디코딩합니다
+case (Opcode)
+	6'd0 : begin
+		RegDst = 1; RegWrite = 1; ALUSrc = 0; MemWrite = 0; MemRead = 0; MemtoReg = 0;
+		Branch = 0; NotEqualBranch = 0; Jump = 0;
+		if (Funct == 6'd32) // add
+			ALUop = 4'b0010;
+		else if (Funct == 6'd24) // multiplier
+			ALUop = 4'b1000;
+		else if (Funct == 6'd34) // sub
+			ALUop = 4'b0110;
+		else if (Funct == 6'd36) // AND
+			ALUop = 4'b0000;
+		else if (Funct == 6'd37) // OR
+			ALUop = 4'b0001;
+		else if (Funct == 6'd38) // XOR
+			ALUop = 4'b1101;
+		else if (Funct == 6'd39) // NOR
+			ALUop = 4'b1100;
+		end
+	6'd35 : begin // Load Word
+		RegDst = 0; RegWrite = 1; ALUSrc = 1; MemtoReg = 1;
+		MemRead = 1; MemWrite = 0; Branch = 0; NotEqualBranch = 0; Jump = 0;
+		ALUop = 4'b0010; 
+		end
+	6'd43 : begin // Store Word
+		RegDst = 1'dx ; RegWrite = 0; ALUSrc = 1; MemtoReg = 1'dx;
+		MemRead = 0; MemWrite = 1; Branch = 0; NotEqualBranch = 0; Jump = 0;
+		ALUop = 4'b0010;
+		end
+	6'd8 : begin // Addi typeI
+		RegDst = 0 ; RegWrite = 1; ALUSrc = 1; MemtoReg = 0;
+		MemRead = 0; MemWrite = 0; Branch = 0; NotEqualBranch = 0; Jump = 0;
+		ALUop = 4'b0010;
+		end
+	6'd4 : begin // Beq
+		RegDst = 1'bz ; RegWrite = 1; ALUSrc = 0; MemtoReg = 1'bz;
+		MemRead = 0; MemWrite = 0; Branch = 1; NotEqualBranch = 0; Jump = 0;
+		ALUop = 4'b0110; // 비교하기 위해 sub
+		end
+	6'd5 : begin // Bne, Branch not equal
+		RegDst = 1'bz ; RegWrite = 1; ALUSrc = 0; MemtoReg = 1'bz;
+		MemRead = 0; MemWrite = 0; Branch = 0; NotEqualBranch = 1; Jump = 0;
+		ALUop = 4'b0110; // 비교하기 위해 sub
+		end
+	6'd2 : begin // Unconditional Jump
+		RegDst = 1'bz ; RegWrite = 0; ALUSrc = 0; MemtoReg = 1'bz;
+		MemRead = 0; MemWrite = 0; Branch = 0; NotEqualBranch = 0; Jump = 1;
+		end
+	default: begin end
+	
+	
+endcase
+end
+endmodule
